@@ -1,0 +1,26 @@
+# Enclaude minimal image without development tools
+# Use: enclaude build -f docker/examples/Dockerfile.minimal -t enclaude-minimal:latest
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /workspace
+
+# Install Claude via official script and copy to shared location
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && cp -L /root/.local/bin/claude /usr/local/bin/claude \
+    && chmod 755 /usr/local/bin/claude
+
+ENV HOME=/root
+
+WORKDIR /workspace
+
+ENTRYPOINT ["/usr/local/bin/claude"]

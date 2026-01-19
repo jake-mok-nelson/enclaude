@@ -1,0 +1,54 @@
+# Enclaude default configuration
+# Copy to ~/.config/enclaude/config.yaml and customize
+
+# Image settings
+image:
+  name: enclaude:latest
+  # dockerfile: ""  # Path to custom Dockerfile (optional)
+  # build_context: ""  # Custom build context (optional)
+
+# Default mounts (in addition to working directory)
+mounts:
+  defaults: []
+    # - path: ~/projects/shared-utils
+    #   readonly: true
+  claude_dir: readwrite  # none | readonly | readwrite
+
+# Credential passthrough
+credentials:
+  anthropic: auto    # auto | enabled | disabled
+  github: auto       # auto | enabled | disabled
+  gcloud: auto       # auto | enabled | disabled
+  ssh:
+    enabled: false   # Explicit opt-in for SSH
+    keys: []         # Specific keys to mount (read-only)
+      # - ~/.ssh/id_ed25519
+      # - ~/.ssh/id_ed25519.pub
+    known_hosts: true       # Include ~/.ssh/known_hosts
+    agent_forwarding: true  # Forward SSH_AUTH_SOCK
+
+# Environment variables to pass through
+environment:
+  passthrough:
+    - TERM
+    - COLORTERM
+    - EDITOR
+  custom: {}
+    # DEBUG: "false"
+
+# Default Claude CLI arguments
+claude:
+  default_args: []
+  # Example: ["--model", "claude-sonnet-4-20250514"]
+
+# Container settings
+container:
+  user: auto          # auto | uid:gid
+  memory_limit: 4g
+  network: bridge     # bridge | none | host
+
+# Security settings
+security:
+  drop_capabilities: true
+  no_new_privileges: true
+  read_only_root: true
