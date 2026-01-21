@@ -52,11 +52,15 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
     && cp -L /root/.local/bin/claude /usr/local/bin/claude \
     && chmod 755 /usr/local/bin/claude
 
+# Copy entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod 755 /usr/local/bin/entrypoint.sh
+
 # Set up environment
 ENV HOME=/root
 
 # Default working directory
 WORKDIR /workspace
 
-# Default command
-ENTRYPOINT ["/usr/local/bin/claude"]
+# Default command - entrypoint script installs CA certs at container start
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

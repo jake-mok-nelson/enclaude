@@ -71,9 +71,10 @@ type ContainerConfig struct {
 
 // SecurityConfig configures security settings
 type SecurityConfig struct {
-	DropCapabilities bool `mapstructure:"drop_capabilities"`
-	NoNewPrivileges  bool `mapstructure:"no_new_privileges"`
-	ReadOnlyRoot     bool `mapstructure:"read_only_root"`
+	DropCapabilities bool     `mapstructure:"drop_capabilities"`
+	NoNewPrivileges  bool     `mapstructure:"no_new_privileges"`
+	ReadOnlyRoot     bool     `mapstructure:"read_only_root"`
+	CACerts          []string `mapstructure:"ca_certs"` // Additional CA certificate paths to mount
 }
 
 // LoadConfig loads configuration from viper with defaults
@@ -129,6 +130,7 @@ func setDefaults() {
 	viper.SetDefault("security.drop_capabilities", true)
 	viper.SetDefault("security.no_new_privileges", true)
 	viper.SetDefault("security.read_only_root", true)
+	viper.SetDefault("security.ca_certs", []string{})
 }
 
 func defaultConfig() *Config {
@@ -167,6 +169,7 @@ func defaultConfig() *Config {
 			DropCapabilities: true,
 			NoNewPrivileges:  true,
 			ReadOnlyRoot:     true,
+			CACerts:          []string{},
 		},
 	}
 }

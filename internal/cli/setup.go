@@ -367,5 +367,6 @@ security:
   drop_capabilities: true
   no_new_privileges: true
   read_only_root: true
+  ca_certs: []        # Additional CA certificates to mount (e.g., corporate CA)
 `, auth, github, gcloud, sshEnabledStr, memory, network)
 }

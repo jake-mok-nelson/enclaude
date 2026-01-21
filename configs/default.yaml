@@ -52,3 +52,9 @@ security:
   drop_capabilities: true
   no_new_privileges: true
   read_only_root: true
+  ca_certs: []
+    # Additional CA certificates to mount in the container
+    # Useful for corporate environments with self-signed certificates
+    # Example:
+    # - /path/to/corporate-ca.crt
+    # - ~/.local/share/certs/internal-ca.pem

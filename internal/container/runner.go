@@ -91,6 +91,36 @@ func (r *Runner) Run(ctx context.Context, cancel context.CancelFunc, opts RunOpt
 		}
 	}
 
+	// Mount CA certificates if configured
+	if len(opts.Security.CACerts) > 0 {
+		for _, certPath := range opts.Security.CACerts {
+			certName := filepath.Base(certPath)
+			mounts = append(mounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   certPath,
+				Target:   "/usr/local/share/ca-certificates/" + certName,
+				ReadOnly: true,
+			})
+		}
+		// Add tmpfs mounts for CA certificate installation directories
+		// update-ca-certificates needs to write to these directories at container start
+		caCertDirs := []string{"/etc/ssl/certs", "/etc/ca-certificates"}
+		for _, path := range caCertDirs {
+			mounts = append(mounts, mount.Mount{
+				Type:   mount.TypeTmpfs,
+				Target: path,
+			})
+		}
+		// Set NODE_EXTRA_CA_CERTS for Node.js applications (Claude uses Node.js)
+		// NODE_EXTRA_CA_CERTS only accepts a single file path, so we only set it
+		// when exactly one CA certificate is configured. For multiple certificates,
+		// users should bundle them into a single PEM file.
+		if len(opts.Security.CACerts) == 1 {
+			certName := filepath.Base(opts.Security.CACerts[0])
+			env = append(env, "NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/"+certName)
+		}
+	}
+
 	// Determine user
 	user := ""
 	if opts.User == "auto" {

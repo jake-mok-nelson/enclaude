@@ -135,6 +135,8 @@ security:
   drop_capabilities: true
   no_new_privileges: true
   read_only_root: true
+  ca_certs:             # Additional CA certificates
+    - /path/to/corporate-ca.crt
 ```
 
 ## Credential Passthrough
@@ -189,6 +191,23 @@ By default, enclaude applies these security measures:
 - Read-only root filesystem
 - Non-root user execution
 - Memory limits
+
+### Custom CA Certificates
+
+For corporate environments with self-signed certificates or private CA certificates, you can configure additional CA certificates to be mounted in the container:
+
+```yaml
+security:
+  ca_certs:
+    - /path/to/corporate-ca.crt
+    - ~/.local/share/certs/internal-ca.pem
+```
+
+The certificates are mounted to `/usr/local/share/ca-certificates/` and installed into the OS trust store at container start using `update-ca-certificates`. This makes them available to all applications (curl, wget, git, etc.) and any subshells that Claude may spawn.
+
+For Node.js applications (like Claude), the `NODE_EXTRA_CA_CERTS` environment variable is automatically set when a single CA certificate is configured.
+
+**Note:** For multiple CA certificates, consider bundling them into a single PEM file for best compatibility with all applications.
 
 ## Custom Images
 
