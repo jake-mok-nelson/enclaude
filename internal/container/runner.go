@@ -102,6 +102,15 @@ func (r *Runner) Run(ctx context.Context, cancel context.CancelFunc, opts RunOpt
 				ReadOnly: true,
 			})
 		}
+		// Add tmpfs mounts for CA certificate installation directories
+		// update-ca-certificates needs to write to these directories at container start
+		caCertDirs := []string{"/etc/ssl/certs", "/etc/ca-certificates"}
+		for _, path := range caCertDirs {
+			mounts = append(mounts, mount.Mount{
+				Type:   mount.TypeTmpfs,
+				Target: path,
+			})
+		}
 		// Set NODE_EXTRA_CA_CERTS for Node.js applications (Claude uses Node.js)
 		// NODE_EXTRA_CA_CERTS only accepts a single file path, so we only set it
 		// when exactly one CA certificate is configured. For multiple certificates,

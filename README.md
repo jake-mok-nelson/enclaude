@@ -203,7 +203,9 @@ security:
     - ~/.local/share/certs/internal-ca.pem
 ```
 
-The certificates are mounted read-only to `/usr/local/share/ca-certificates/` inside the container. For Node.js applications (like Claude), the `NODE_EXTRA_CA_CERTS` environment variable is automatically set when a single CA certificate is configured.
+The certificates are mounted to `/usr/local/share/ca-certificates/` and installed into the OS trust store at container start using `update-ca-certificates`. This makes them available to all applications (curl, wget, git, etc.) and any subshells that Claude may spawn.
+
+For Node.js applications (like Claude), the `NODE_EXTRA_CA_CERTS` environment variable is automatically set when a single CA certificate is configured.
 
 **Note:** For multiple CA certificates, consider bundling them into a single PEM file for best compatibility with all applications.
 
