@@ -106,7 +106,7 @@ func setDefaults() {
 
 	// Claude authentication defaults
 	viper.SetDefault("claude.auth", "auto")
-	viper.SetDefault("claude.session_dir", "readwrite")
+	viper.SetDefault("claude.session_dir", "readonly")
 	viper.SetDefault("claude.default_args", []string{})
 
 	// External credential defaults
@@ -143,7 +143,7 @@ func defaultConfig() *Config {
 		},
 		Claude: ClaudeConfig{
 			Auth:        "auto",
-			SessionDir:  "readwrite",
+			SessionDir:  "readonly",
 			DefaultArgs: []string{},
 		},
 		Credentials: CredentialsConfig{

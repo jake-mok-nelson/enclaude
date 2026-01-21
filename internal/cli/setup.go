@@ -335,7 +335,7 @@ mounts:
 # Claude Code authentication
 claude:
   auth: %s              # auto | session | api-key
-  session_dir: readwrite  # none | readonly | readwrite
+  session_dir: readonly   # none | readonly | readwrite
   default_args: []
 
 # External service credentials
