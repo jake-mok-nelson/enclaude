@@ -99,6 +99,7 @@ func TestGenerateConfig(t *testing.T) {
 		"enabled: false",
 		"memory_limit: 4g",
 		"network: bridge",
+		"ca_certs: []",
 	}
 
 	for _, expected := range expectedStrings {

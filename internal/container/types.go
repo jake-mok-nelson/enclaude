@@ -25,6 +25,7 @@ type SecurityOptions struct {
 	DropCapabilities bool
 	NoNewPrivileges  bool
 	ReadOnlyRoot     bool
+	CACerts          []string // Paths to additional CA certificates
 }
 
 // BuildOptions configures image building

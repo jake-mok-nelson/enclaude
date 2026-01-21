@@ -127,6 +127,21 @@ func runContainer(cmd *cobra.Command, args []string) error {
 		imageName = cfg.Image.Name
 	}
 
+	// Expand and validate CA certificate paths
+	var caCerts []string
+	for _, certPath := range cfg.Security.CACerts {
+		expanded, err := security.ExpandPath(certPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: skipping invalid CA cert path %q: %v\n", certPath, err)
+			continue
+		}
+		if _, err := os.Stat(expanded); os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "Warning: CA cert file not found %q\n", certPath)
+			continue
+		}
+		caCerts = append(caCerts, expanded)
+	}
+
 	// Build run options
 	opts := container.RunOptions{
 		Image:       imageName,
@@ -141,6 +156,7 @@ func runContainer(cmd *cobra.Command, args []string) error {
 			DropCapabilities: cfg.Security.DropCapabilities,
 			NoNewPrivileges:  cfg.Security.NoNewPrivileges,
 			ReadOnlyRoot:     cfg.Security.ReadOnlyRoot,
+			CACerts:          caCerts,
 		},
 	}
 
