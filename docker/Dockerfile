@@ -53,7 +53,7 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
     && chmod 755 /usr/local/bin/claude
 
 # Copy entrypoint script
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # Set up environment
