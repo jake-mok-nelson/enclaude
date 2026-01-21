@@ -135,8 +135,12 @@ func runContainer(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(os.Stderr, "Warning: skipping invalid CA cert path %q: %v\n", certPath, err)
 			continue
 		}
+		if err := security.ValidateMountPath(expanded); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: skipping denied CA cert path %q: %v\n", expanded, err)
+			continue
+		}
 		if _, err := os.Stat(expanded); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Warning: CA cert file not found %q\n", certPath)
+			fmt.Fprintf(os.Stderr, "Warning: CA cert file not found %q\n", expanded)
 			continue
 		}
 		caCerts = append(caCerts, expanded)

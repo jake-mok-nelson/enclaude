@@ -103,8 +103,9 @@ func (r *Runner) Run(ctx context.Context, cancel context.CancelFunc, opts RunOpt
 			})
 		}
 		// Set NODE_EXTRA_CA_CERTS for Node.js applications (Claude uses Node.js)
-		// We concatenate paths since NODE_EXTRA_CA_CERTS only accepts a single file
-		// For multiple certs, users should bundle them into a single file
+		// NODE_EXTRA_CA_CERTS only accepts a single file path, so we only set it
+		// when exactly one CA certificate is configured. For multiple certificates,
+		// users should bundle them into a single PEM file.
 		if len(opts.Security.CACerts) == 1 {
 			certName := filepath.Base(opts.Security.CACerts[0])
 			env = append(env, "NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/"+certName)
