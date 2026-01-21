@@ -160,7 +160,11 @@ func selectAuthMethod(reader *bufio.Reader, methods map[string]bool) string {
 
 	for {
 		fmt.Printf("\nChoice [1-3] (default: auto): ")
-		input, _ := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\nError reading input: %v\n", err)
+			return defaultChoice
+		}
 		input = strings.TrimSpace(input)
 
 		if input == "" {
@@ -195,7 +199,11 @@ func configureCredential(reader *bufio.Reader, name, defaultValue string) string
 
 	for {
 		fmt.Printf("\nChoice [1-3] (default: auto): ")
-		input, _ := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\nError reading input: %v\n", err)
+			return defaultValue
+		}
 		input = strings.TrimSpace(input)
 
 		if input == "" {
@@ -230,7 +238,11 @@ func configureMemory(reader *bufio.Reader) string {
 
 	for {
 		fmt.Printf("Memory limit (default: 4g): ")
-		input, _ := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\nError reading input: %v\n", err)
+			return "4g"
+		}
 		input = strings.TrimSpace(input)
 
 		if input == "" {
@@ -255,7 +267,11 @@ func configureNetwork(reader *bufio.Reader) string {
 
 	for {
 		fmt.Printf("\nChoice [1-3] (default: bridge): ")
-		input, _ := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\nError reading input: %v\n", err)
+			return "bridge"
+		}
 		input = strings.TrimSpace(input)
 
 		if input == "" {
@@ -279,7 +295,11 @@ func configureNetwork(reader *bufio.Reader) string {
 func confirm(reader *bufio.Reader, prompt string) bool {
 	for {
 		fmt.Printf("%s [y/N]: ", prompt)
-		input, _ := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\nError reading input: %v\n", err)
+			return false
+		}
 		input = strings.ToLower(strings.TrimSpace(input))
 
 		if input == "" || input == "n" || input == "no" {

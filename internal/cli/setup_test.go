@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -101,21 +102,8 @@ func TestGenerateConfig(t *testing.T) {
 	}
 
 	for _, expected := range expectedStrings {
-		if !contains(config, expected) {
+		if !strings.Contains(config, expected) {
 			t.Errorf("generateConfig() missing expected string: %s", expected)
 		}
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
