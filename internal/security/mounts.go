@@ -143,3 +143,23 @@ func expandTilde(path, home string) string {
 func IsPathInDirectory(path, directory string) bool {
 	return pathMatches(path, directory)
 }
+
+// PathExists checks if a path exists and matches the expected type.
+// If expectDir is true, checks for directory; if false, checks for file.
+func PathExists(path string, expectDir bool) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir() == expectDir
+}
+
+// FileExists checks if a path exists and is a file (not a directory).
+func FileExists(path string) bool {
+	return PathExists(path, false)
+}
+
+// DirExists checks if a path exists and is a directory.
+func DirExists(path string) bool {
+	return PathExists(path, true)
+}

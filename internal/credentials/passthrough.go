@@ -40,7 +40,7 @@ func CollectClaudeAuth(cfg *config.Config) ([]container.Mount, map[string]string
 		}
 		if sessionDir != config.SessionNone {
 			claudePath := filepath.Join(home, ".claude")
-			if dirExists(claudePath) {
+			if security.DirExists(claudePath) {
 				// Mount to /tmp/.claude because container HOME is set to /tmp
 				// This allows Claude to find the session directory while running as non-root
 				mounts = append(mounts, container.Mount{
@@ -76,7 +76,7 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 		} else {
 			// Try mounting gh config
 			ghConfigPath := filepath.Join(home, ".config", "gh", "hosts.yml")
-			if fileExists(ghConfigPath) {
+			if security.FileExists(ghConfigPath) {
 				mounts = append(mounts, container.Mount{
 					Source:   ghConfigPath,
 					Target:   "/root/.config/gh/hosts.yml",
@@ -89,7 +89,7 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 	// Google Cloud ADC
 	if shouldEnable(cfg.Credentials.GCloud, "GOOGLE_APPLICATION_CREDENTIALS") {
 		adcPath := filepath.Join(home, ".config", "gcloud", "application_default_credentials.json")
-		if fileExists(adcPath) {
+		if security.FileExists(adcPath) {
 			mounts = append(mounts, container.Mount{
 				Source:   adcPath,
 				Target:   "/root/.config/gcloud/application_default_credentials.json",
@@ -100,7 +100,7 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 		}
 
 		// Also check for explicit GOOGLE_APPLICATION_CREDENTIALS path
-		if customPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); customPath != "" && fileExists(customPath) {
+		if customPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); customPath != "" && security.FileExists(customPath) {
 			mounts = append(mounts, container.Mount{
 				Source:   customPath,
 				Target:   "/root/.config/gcloud/application_default_credentials.json",
@@ -133,7 +133,7 @@ func collectSSHCredentials(cfg *config.Config, home string) ([]container.Mount, 
 			// Skip keys with expansion errors
 			continue
 		}
-		if fileExists(expanded) {
+		if security.FileExists(expanded) {
 			// Determine target path
 			keyName := filepath.Base(expanded)
 			mounts = append(mounts, container.Mount{
@@ -147,7 +147,7 @@ func collectSSHCredentials(cfg *config.Config, home string) ([]container.Mount, 
 	// Mount known_hosts if configured
 	if cfg.Credentials.SSH.KnownHosts {
 		knownHostsPath := filepath.Join(home, ".ssh", "known_hosts")
-		if fileExists(knownHostsPath) {
+		if security.FileExists(knownHostsPath) {
 			mounts = append(mounts, container.Mount{
 				Source:   knownHostsPath,
 				Target:   "/root/.ssh/known_hosts",
@@ -191,22 +191,4 @@ func shouldEnable(setting string, envVars ...string) bool {
 	default:
 		return true // Default to auto behavior
 	}
-}
-
-// pathExists checks if a path exists and matches the expected type.
-// If expectDir is true, checks for directory; if false, checks for file.
-func pathExists(path string, expectDir bool) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir() == expectDir
-}
-
-func fileExists(path string) bool {
-	return pathExists(path, false)
-}
-
-func dirExists(path string) bool {
-	return pathExists(path, true)
 }
