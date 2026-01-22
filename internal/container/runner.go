@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -465,29 +464,4 @@ func (r *Runner) ImageExists(ctx context.Context, image string) (bool, error) {
 	return true, nil
 }
 
-// parseMemoryLimit parses memory limit strings like "4g", "512m"
-func parseMemoryLimit(limit string) (int64, error) {
-	limit = strings.ToLower(strings.TrimSpace(limit))
-	if limit == "" {
-		return 0, nil
-	}
 
-	multiplier := int64(1)
-	if strings.HasSuffix(limit, "g") {
-		multiplier = 1024 * 1024 * 1024
-		limit = strings.TrimSuffix(limit, "g")
-	} else if strings.HasSuffix(limit, "m") {
-		multiplier = 1024 * 1024
-		limit = strings.TrimSuffix(limit, "m")
-	} else if strings.HasSuffix(limit, "k") {
-		multiplier = 1024
-		limit = strings.TrimSuffix(limit, "k")
-	}
-
-	value, err := strconv.ParseInt(limit, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid memory limit: %w", err)
-	}
-
-	return value * multiplier, nil
-}

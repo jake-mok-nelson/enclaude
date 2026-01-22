@@ -120,12 +120,13 @@ func pathMatches(path, target string) bool {
 		return true
 	}
 
-	// Path is a child of target
-	if strings.HasPrefix(path, target+string(filepath.Separator)) {
-		return true
+	// Check if path is a child of target using filepath.Rel
+	rel, err := filepath.Rel(target, path)
+	if err != nil {
+		return false
 	}
-
-	return false
+	// If relative path starts with "..", path is not under target
+	return !strings.HasPrefix(rel, "..")
 }
 
 func expandTilde(path, home string) string {

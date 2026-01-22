@@ -6,6 +6,7 @@ import (
 
 	"github.com/jakenelson/enclaude/internal/config"
 	"github.com/jakenelson/enclaude/internal/container"
+	"github.com/jakenelson/enclaude/internal/security"
 )
 
 // CollectClaudeAuth handles Claude Code authentication based on config.
@@ -121,39 +122,17 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 	return mounts, env, nil
 }
 
-// Collect gathers all credential mounts and environment variables based on config.
-// Deprecated: Use CollectClaudeAuth and CollectExternalCredentials instead.
-func Collect(cfg *config.Config) ([]container.Mount, map[string]string, error) {
-	var mounts []container.Mount
-	env := make(map[string]string)
-
-	// Collect Claude auth
-	claudeMounts, claudeEnv := CollectClaudeAuth(cfg)
-	mounts = append(mounts, claudeMounts...)
-	for k, v := range claudeEnv {
-		env[k] = v
-	}
-
-	// Collect external credentials
-	extMounts, extEnv, err := CollectExternalCredentials(cfg)
-	if err != nil {
-		return nil, nil, err
-	}
-	mounts = append(mounts, extMounts...)
-	for k, v := range extEnv {
-		env[k] = v
-	}
-
-	return mounts, env, nil
-}
-
 func collectSSHCredentials(cfg *config.Config, home string) ([]container.Mount, map[string]string) {
 	var mounts []container.Mount
 	env := make(map[string]string)
 
 	// Mount specific SSH keys (read-only)
 	for _, keyPath := range cfg.Credentials.SSH.Keys {
-		expanded := expandPath(keyPath, home)
+		expanded, err := security.ExpandPath(keyPath)
+		if err != nil {
+			// Skip keys with expansion errors
+			continue
+		}
 		if fileExists(expanded) {
 			// Determine target path
 			keyName := filepath.Base(expanded)
@@ -214,28 +193,20 @@ func shouldEnable(setting string, envVars ...string) bool {
 	}
 }
 
-func expandPath(path, home string) string {
-	if len(path) > 1 && path[:2] == "~/" {
-		return filepath.Join(home, path[2:])
+// pathExists checks if a path exists and matches the expected type.
+// If expectDir is true, checks for directory; if false, checks for file.
+func pathExists(path string, expectDir bool) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
 	}
-	if path == "~" {
-		return home
-	}
-	return path
+	return info.IsDir() == expectDir
 }
 
 func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return !info.IsDir()
+	return pathExists(path, false)
 }
 
 func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
+	return pathExists(path, true)
 }
