@@ -6,6 +6,7 @@ import (
 
 	"github.com/jakenelson/enclaude/internal/config"
 	"github.com/jakenelson/enclaude/internal/container"
+	"github.com/jakenelson/enclaude/internal/security"
 )
 
 // CollectClaudeAuth handles Claude Code authentication based on config.
@@ -21,31 +22,31 @@ func CollectClaudeAuth(cfg *config.Config) ([]container.Mount, map[string]string
 
 	auth := cfg.Claude.Auth
 	if auth == "" {
-		auth = "auto"
+		auth = config.AuthAuto
 	}
 
 	// Handle API key
-	if auth == "auto" || auth == "api-key" {
+	if auth == config.AuthAuto || auth == config.AuthAPIKey {
 		if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
 			env["ANTHROPIC_API_KEY"] = key
 		}
 	}
 
 	// Handle session directory
-	if auth == "auto" || auth == "session" {
+	if auth == config.AuthAuto || auth == config.AuthSession {
 		sessionDir := cfg.Claude.SessionDir
 		if sessionDir == "" {
-			sessionDir = "readonly"
+			sessionDir = config.SessionReadOnly
 		}
-		if sessionDir != "none" {
+		if sessionDir != config.SessionNone {
 			claudePath := filepath.Join(home, ".claude")
-			if dirExists(claudePath) {
+			if security.DirExists(claudePath) {
 				// Mount to /tmp/.claude because container HOME is set to /tmp
 				// This allows Claude to find the session directory while running as non-root
 				mounts = append(mounts, container.Mount{
 					Source:   claudePath,
 					Target:   "/tmp/.claude",
-					ReadOnly: sessionDir == "readonly",
+					ReadOnly: sessionDir == config.SessionReadOnly,
 				})
 			}
 		}
@@ -75,7 +76,7 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 		} else {
 			// Try mounting gh config
 			ghConfigPath := filepath.Join(home, ".config", "gh", "hosts.yml")
-			if fileExists(ghConfigPath) {
+			if security.FileExists(ghConfigPath) {
 				mounts = append(mounts, container.Mount{
 					Source:   ghConfigPath,
 					Target:   "/root/.config/gh/hosts.yml",
@@ -88,7 +89,7 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 	// Google Cloud ADC
 	if shouldEnable(cfg.Credentials.GCloud, "GOOGLE_APPLICATION_CREDENTIALS") {
 		adcPath := filepath.Join(home, ".config", "gcloud", "application_default_credentials.json")
-		if fileExists(adcPath) {
+		if security.FileExists(adcPath) {
 			mounts = append(mounts, container.Mount{
 				Source:   adcPath,
 				Target:   "/root/.config/gcloud/application_default_credentials.json",
@@ -99,7 +100,7 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 		}
 
 		// Also check for explicit GOOGLE_APPLICATION_CREDENTIALS path
-		if customPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); customPath != "" && fileExists(customPath) {
+		if customPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); customPath != "" && security.FileExists(customPath) {
 			mounts = append(mounts, container.Mount{
 				Source:   customPath,
 				Target:   "/root/.config/gcloud/application_default_credentials.json",
@@ -121,40 +122,18 @@ func CollectExternalCredentials(cfg *config.Config) ([]container.Mount, map[stri
 	return mounts, env, nil
 }
 
-// Collect gathers all credential mounts and environment variables based on config.
-// Deprecated: Use CollectClaudeAuth and CollectExternalCredentials instead.
-func Collect(cfg *config.Config) ([]container.Mount, map[string]string, error) {
-	var mounts []container.Mount
-	env := make(map[string]string)
-
-	// Collect Claude auth
-	claudeMounts, claudeEnv := CollectClaudeAuth(cfg)
-	mounts = append(mounts, claudeMounts...)
-	for k, v := range claudeEnv {
-		env[k] = v
-	}
-
-	// Collect external credentials
-	extMounts, extEnv, err := CollectExternalCredentials(cfg)
-	if err != nil {
-		return nil, nil, err
-	}
-	mounts = append(mounts, extMounts...)
-	for k, v := range extEnv {
-		env[k] = v
-	}
-
-	return mounts, env, nil
-}
-
 func collectSSHCredentials(cfg *config.Config, home string) ([]container.Mount, map[string]string) {
 	var mounts []container.Mount
 	env := make(map[string]string)
 
 	// Mount specific SSH keys (read-only)
 	for _, keyPath := range cfg.Credentials.SSH.Keys {
-		expanded := expandPath(keyPath, home)
-		if fileExists(expanded) {
+		expanded, err := security.ExpandPath(keyPath)
+		if err != nil {
+			// Skip keys with expansion errors
+			continue
+		}
+		if security.FileExists(expanded) {
 			// Determine target path
 			keyName := filepath.Base(expanded)
 			mounts = append(mounts, container.Mount{
@@ -168,7 +147,7 @@ func collectSSHCredentials(cfg *config.Config, home string) ([]container.Mount, 
 	// Mount known_hosts if configured
 	if cfg.Credentials.SSH.KnownHosts {
 		knownHostsPath := filepath.Join(home, ".ssh", "known_hosts")
-		if fileExists(knownHostsPath) {
+		if security.FileExists(knownHostsPath) {
 			mounts = append(mounts, container.Mount{
 				Source:   knownHostsPath,
 				Target:   "/root/.ssh/known_hosts",
@@ -197,11 +176,11 @@ func collectSSHCredentials(cfg *config.Config, home string) ([]container.Mount, 
 // shouldEnable determines if a credential should be enabled based on config and presence
 func shouldEnable(setting string, envVars ...string) bool {
 	switch setting {
-	case "enabled":
+	case config.CredentialEnabled:
 		return true
-	case "disabled":
+	case config.CredentialDisabled:
 		return false
-	case "auto":
+	case config.CredentialAuto:
 		// Auto-detect: enabled if any of the env vars are set or related files exist
 		for _, v := range envVars {
 			if os.Getenv(v) != "" {
@@ -212,30 +191,4 @@ func shouldEnable(setting string, envVars ...string) bool {
 	default:
 		return true // Default to auto behavior
 	}
-}
-
-func expandPath(path, home string) string {
-	if len(path) > 1 && path[:2] == "~/" {
-		return filepath.Join(home, path[2:])
-	}
-	if path == "~" {
-		return home
-	}
-	return path
-}
-
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return !info.IsDir()
-}
-
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
 }

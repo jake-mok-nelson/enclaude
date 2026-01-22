@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jakenelson/enclaude/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -51,8 +52,8 @@ func runSetup(cmd *cobra.Command, args []string) error {
 	// Step 3: Configure external credentials
 	fmt.Println("\nStep 3: Configure External Credentials")
 	fmt.Println("---------------------------------------")
-	githubCred := configureCredential(reader, "GitHub", "auto")
-	gcloudCred := configureCredential(reader, "Google Cloud", "auto")
+	githubCred := configureCredential(reader, "GitHub", config.CredentialAuto)
+	gcloudCred := configureCredential(reader, "Google Cloud", config.CredentialAuto)
 	sshEnabled := configureSSH(reader)
 
 	// Step 4: Container preferences
@@ -116,7 +117,7 @@ func detectClaudeAuth() map[string]bool {
 
 	// Check for API key
 	if os.Getenv("ANTHROPIC_API_KEY") != "" {
-		methods["api-key"] = true
+		methods[config.AuthAPIKey] = true
 	}
 
 	// Check for session directory
@@ -124,7 +125,7 @@ func detectClaudeAuth() map[string]bool {
 	if err == nil {
 		claudePath := filepath.Join(home, ".claude")
 		if info, err := os.Stat(claudePath); err == nil && info.IsDir() {
-			methods["session"] = true
+			methods[config.AuthSession] = true
 		}
 	}
 
@@ -140,10 +141,10 @@ func displayAuthMethods(methods map[string]bool) {
 	}
 
 	fmt.Println("✅ Detected authentication methods:")
-	if methods["api-key"] {
+	if methods[config.AuthAPIKey] {
 		fmt.Println("   • API Key (ANTHROPIC_API_KEY environment variable)")
 	}
-	if methods["session"] {
+	if methods[config.AuthSession] {
 		fmt.Println("   • Session Directory (~/.claude)")
 	}
 }
@@ -156,7 +157,7 @@ func selectAuthMethod(reader *bufio.Reader, methods map[string]bool) string {
 	fmt.Println("  3) session  - Use session directory only")
 
 	// Determine default based on what's available
-	defaultChoice := "auto"
+	defaultChoice := config.AuthAuto
 
 	for {
 		fmt.Printf("\nChoice [1-3] (default: auto): ")
@@ -173,17 +174,17 @@ func selectAuthMethod(reader *bufio.Reader, methods map[string]bool) string {
 
 		switch input {
 		case "1":
-			return "auto"
+			return config.AuthAuto
 		case "2":
-			if !methods["api-key"] {
+			if !methods[config.AuthAPIKey] {
 				fmt.Println("⚠️  API key not detected. You can still select this option.")
 			}
-			return "api-key"
+			return config.AuthAPIKey
 		case "3":
-			if !methods["session"] {
+			if !methods[config.AuthSession] {
 				fmt.Println("⚠️  Session directory not detected. You can still select this option.")
 			}
-			return "session"
+			return config.AuthSession
 		default:
 			fmt.Println("❌ Invalid choice. Please enter 1, 2, or 3.")
 		}
@@ -212,11 +213,11 @@ func configureCredential(reader *bufio.Reader, name, defaultValue string) string
 
 		switch input {
 		case "1":
-			return "auto"
+			return config.CredentialAuto
 		case "2":
-			return "enabled"
+			return config.CredentialEnabled
 		case "3":
-			return "disabled"
+			return config.CredentialDisabled
 		default:
 			fmt.Println("❌ Invalid choice. Please enter 1, 2, or 3.")
 		}
@@ -270,21 +271,21 @@ func configureNetwork(reader *bufio.Reader) string {
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Printf("\nError reading input: %v\n", err)
-			return "bridge"
+			return config.NetworkBridge
 		}
 		input = strings.TrimSpace(input)
 
 		if input == "" {
-			return "bridge"
+			return config.NetworkBridge
 		}
 
 		switch input {
 		case "1":
-			return "bridge"
+			return config.NetworkBridge
 		case "2":
-			return "host"
+			return config.NetworkHost
 		case "3":
-			return "none"
+			return config.NetworkNone
 		default:
 			fmt.Println("❌ Invalid choice. Please enter 1, 2, or 3.")
 		}

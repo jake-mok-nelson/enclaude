@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jakenelson/enclaude/internal/config"
 )
 
 func TestDetectClaudeAuth(t *testing.T) {
@@ -77,11 +79,11 @@ func TestDetectClaudeAuth(t *testing.T) {
 
 			methods := detectClaudeAuth()
 
-			if got := methods["api-key"]; got != tt.wantAPIKey {
+			if got := methods[config.AuthAPIKey]; got != tt.wantAPIKey {
 				t.Errorf("detectClaudeAuth() api-key = %v, want %v", got, tt.wantAPIKey)
 			}
 
-			if got := methods["session"]; got != tt.wantSession {
+			if got := methods[config.AuthSession]; got != tt.wantSession {
 				t.Errorf("detectClaudeAuth() session = %v, want %v", got, tt.wantSession)
 			}
 		})
@@ -89,7 +91,7 @@ func TestDetectClaudeAuth(t *testing.T) {
 }
 
 func TestGenerateConfig(t *testing.T) {
-	config := generateConfig("auto", "auto", "disabled", false, "4g", "bridge")
+	cfg := generateConfig(config.AuthAuto, config.CredentialAuto, config.CredentialDisabled, false, "4g", config.NetworkBridge)
 
 	// Check that config contains expected values
 	expectedStrings := []string{
@@ -103,7 +105,7 @@ func TestGenerateConfig(t *testing.T) {
 	}
 
 	for _, expected := range expectedStrings {
-		if !strings.Contains(config, expected) {
+		if !strings.Contains(cfg, expected) {
 			t.Errorf("generateConfig() missing expected string: %s", expected)
 		}
 	}

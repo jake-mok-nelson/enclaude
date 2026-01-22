@@ -42,21 +42,21 @@ func TestCollectClaudeAuth_SessionDirectory(t *testing.T) {
 		},
 		{
 			name:           "explicit readonly",
-			sessionDir:     "readonly",
+			sessionDir:     config.SessionReadOnly,
 			wantTarget:     "/tmp/.claude",
 			wantReadOnly:   true,
 			wantMountCount: 1,
 		},
 		{
 			name:           "explicit readwrite",
-			sessionDir:     "readwrite",
+			sessionDir:     config.SessionReadWrite,
 			wantTarget:     "/tmp/.claude",
 			wantReadOnly:   false,
 			wantMountCount: 1,
 		},
 		{
 			name:           "none should not mount",
-			sessionDir:     "none",
+			sessionDir:     config.SessionNone,
 			wantTarget:     "",
 			wantReadOnly:   false,
 			wantMountCount: 0,
@@ -67,7 +67,7 @@ func TestCollectClaudeAuth_SessionDirectory(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &config.Config{
 				Claude: config.ClaudeConfig{
-					Auth:       "auto",
+					Auth:       config.AuthAuto,
 					SessionDir: tt.sessionDir,
 				},
 			}
@@ -124,25 +124,25 @@ func TestCollectClaudeAuth_APIKey(t *testing.T) {
 	}{
 		{
 			name:       "auto with API key",
-			auth:       "auto",
+			auth:       config.AuthAuto,
 			apiKey:     "test-key",
 			wantAPIKey: true,
 		},
 		{
 			name:       "api-key mode with API key",
-			auth:       "api-key",
+			auth:       config.AuthAPIKey,
 			apiKey:     "test-key",
 			wantAPIKey: true,
 		},
 		{
 			name:       "session mode ignores API key",
-			auth:       "session",
+			auth:       config.AuthSession,
 			apiKey:     "test-key",
 			wantAPIKey: false,
 		},
 		{
 			name:       "auto without API key",
-			auth:       "auto",
+			auth:       config.AuthAuto,
 			apiKey:     "",
 			wantAPIKey: false,
 		},
@@ -159,7 +159,7 @@ func TestCollectClaudeAuth_APIKey(t *testing.T) {
 			cfg := &config.Config{
 				Claude: config.ClaudeConfig{
 					Auth:       tt.auth,
-					SessionDir: "none", // Disable session dir for this test
+					SessionDir: config.SessionNone, // Disable session dir for this test
 				},
 			}
 
