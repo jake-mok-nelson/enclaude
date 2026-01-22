@@ -22,23 +22,23 @@ func CollectClaudeAuth(cfg *config.Config) ([]container.Mount, map[string]string
 
 	auth := cfg.Claude.Auth
 	if auth == "" {
-		auth = "auto"
+		auth = config.AuthAuto
 	}
 
 	// Handle API key
-	if auth == "auto" || auth == "api-key" {
+	if auth == config.AuthAuto || auth == config.AuthAPIKey {
 		if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
 			env["ANTHROPIC_API_KEY"] = key
 		}
 	}
 
 	// Handle session directory
-	if auth == "auto" || auth == "session" {
+	if auth == config.AuthAuto || auth == config.AuthSession {
 		sessionDir := cfg.Claude.SessionDir
 		if sessionDir == "" {
-			sessionDir = "readonly"
+			sessionDir = config.SessionReadOnly
 		}
-		if sessionDir != "none" {
+		if sessionDir != config.SessionNone {
 			claudePath := filepath.Join(home, ".claude")
 			if dirExists(claudePath) {
 				// Mount to /tmp/.claude because container HOME is set to /tmp
@@ -46,7 +46,7 @@ func CollectClaudeAuth(cfg *config.Config) ([]container.Mount, map[string]string
 				mounts = append(mounts, container.Mount{
 					Source:   claudePath,
 					Target:   "/tmp/.claude",
-					ReadOnly: sessionDir == "readonly",
+					ReadOnly: sessionDir == config.SessionReadOnly,
 				})
 			}
 		}
@@ -176,11 +176,11 @@ func collectSSHCredentials(cfg *config.Config, home string) ([]container.Mount, 
 // shouldEnable determines if a credential should be enabled based on config and presence
 func shouldEnable(setting string, envVars ...string) bool {
 	switch setting {
-	case "enabled":
+	case config.CredentialEnabled:
 		return true
-	case "disabled":
+	case config.CredentialDisabled:
 		return false
-	case "auto":
+	case config.CredentialAuto:
 		// Auto-detect: enabled if any of the env vars are set or related files exist
 		for _, v := range envVars {
 			if os.Getenv(v) != "" {

@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-units"
+	"github.com/jakenelson/enclaude/internal/config"
 	"github.com/moby/term"
 )
 
@@ -122,7 +123,7 @@ func (r *Runner) Run(ctx context.Context, cancel context.CancelFunc, opts RunOpt
 
 	// Determine user
 	user := ""
-	if opts.User == "auto" {
+	if opts.User == config.UserAuto {
 		user = fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())
 	} else if opts.User != "" {
 		user = opts.User

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jakenelson/enclaude/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -239,11 +240,11 @@ func getConfigPath() string {
 // validateConfigKey validates key/value pairs for known configuration keys
 func validateConfigKey(key, value string) error {
 	validations := map[string][]string{
-		"claude.auth":        {"auto", "session", "api-key"},
-		"claude.session_dir": {"none", "readonly", "readwrite"},
-		"credentials.github": {"auto", "enabled", "disabled"},
-		"credentials.gcloud": {"auto", "enabled", "disabled"},
-		"container.network":  {"bridge", "none", "host"},
+		"claude.auth":        {config.AuthAuto, config.AuthSession, config.AuthAPIKey},
+		"claude.session_dir": {config.SessionNone, config.SessionReadOnly, config.SessionReadWrite},
+		"credentials.github": {config.CredentialAuto, config.CredentialEnabled, config.CredentialDisabled},
+		"credentials.gcloud": {config.CredentialAuto, config.CredentialEnabled, config.CredentialDisabled},
+		"container.network":  {config.NetworkBridge, config.NetworkNone, config.NetworkHost},
 	}
 
 	if allowed, exists := validations[key]; exists {
