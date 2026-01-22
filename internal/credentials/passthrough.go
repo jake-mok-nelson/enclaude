@@ -35,14 +35,16 @@ func CollectClaudeAuth(cfg *config.Config) ([]container.Mount, map[string]string
 	if auth == "auto" || auth == "session" {
 		sessionDir := cfg.Claude.SessionDir
 		if sessionDir == "" {
-			sessionDir = "readwrite"
+			sessionDir = "readonly"
 		}
 		if sessionDir != "none" {
 			claudePath := filepath.Join(home, ".claude")
 			if dirExists(claudePath) {
+				// Mount to /tmp/.claude because container HOME is set to /tmp
+				// This allows Claude to find the session directory while running as non-root
 				mounts = append(mounts, container.Mount{
 					Source:   claudePath,
-					Target:   "/root/.claude",
+					Target:   "/tmp/.claude",
 					ReadOnly: sessionDir == "readonly",
 				})
 			}

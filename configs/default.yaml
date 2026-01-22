@@ -12,7 +12,7 @@ mounts:
   defaults: []
     # - path: ~/projects/shared-utils
     #   readonly: true
-  claude_dir: readwrite  # none | readonly | readwrite
+  claude_dir: readonly  # none | readonly | readwrite
 
 # Credential passthrough
 credentials:
